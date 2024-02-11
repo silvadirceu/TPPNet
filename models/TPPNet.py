@@ -148,8 +148,9 @@ class CQT400Net(BasicModule):
     
 
 class CQTTPPNet(BasicModule):
-    def __init__(self):
+    def __init__(self, target=None):
         super().__init__()
+        self.target = target
         self.features = nn.Sequential(OrderedDict([
             ('conv0', nn.Conv2d(in_channels=1, out_channels= 32,kernel_size=(36,40),
                                 stride=(1, 1), bias=False)),
@@ -181,6 +182,7 @@ class CQTTPPNet(BasicModule):
 
         self.fc0 = nn.Linear(10*512, 300)
         self.fc1 = nn.Linear(300, 10000)
+        
     def forward(self, x):
         # input [N, C, H, W] (W = 396)
         N = x.size()[0]
@@ -189,5 +191,6 @@ class CQTTPPNet(BasicModule):
         x = SPP(x, [4,3,2,1]) # [N, 256, 1, sum()=79]
         x = x.view(N,-1)
         feature = self.fc0(x)
-        x = self.fc1(feature)
+        if self.target is not None: 
+            x = self.fc1(feature)
         return x, feature
