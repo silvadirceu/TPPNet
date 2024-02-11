@@ -5,12 +5,20 @@ import librosa
 import numpy as np
 import os
 import glob
-from multiprocessing import Pool
+from multiprocessing import Pool, set_start_method
+
 from tqdm import tqdm
 
 
 def CQT(args):
-    for in_file, out_file in args:
+
+    if not isinstance(args,list):
+        args = [args]
+
+    for k, in_file, out_file in args:
+
+        print(f"{k} de {len(args)} -- {in_file}")
+
         try:
             data, sr = librosa.load(in_file, sr=22050.0, mono=True)
             if len(data)<1000:
@@ -28,25 +36,29 @@ def CQT(args):
 
 if __name__ == "__main__":
 
-    in_dir = '/Users/dirceusilva/Documentos/tests/setlist_ecad/audios'
-    out_dir = '/Users/dirceusilva/Documentos/tests/setlist_ecad/features/cqt'
+    #in_dir = '/Users/dirceusilva/Documentos/tests/setlist_ecad/audios'
+    in_dir = '/mnt/dev/dirceusilva/dados/Cover/setlist_all/setlist_ecad/audio/universe'
+    #out_dir = '/Users/dirceusilva/Documentos/tests/setlist_ecad/features/cqt'
+    out_dir = '/mnt/dev/dirceusilva/dados/Cover/setlist_all/setlist_ecad/features/universe_cqt'
     parallel = False
     
     files = glob.glob(os.path.join(in_dir, "**/*.ogg"), recursive=True)
     
-    params =[]
-    for ii, file in tqdm(enumerate(files)):  
-        for file in files:
-            track_id = file.split('/')[-1].split('.')[0]
-            work_id = file.split('/')[-2]
-            out_path = os.path.join(out_dir, work_id)
-            os.makedirs(out_path, exist_ok=True)
-            out_file = os.path.join(out_path, track_id + '.npy')
-            params.append((file, out_file))
+    set_start_method("fork")
 
-    print('begin')
+    params =[]
+    for ii, file in enumerate(files):  
+        track_id = file.split('/')[-1].split('.')[0]
+        work_id = file.split('/')[-2]
+        out_path = os.path.join(out_dir, work_id)
+        os.makedirs(out_path, exist_ok=True)
+        
+        out_file = os.path.join(out_path, track_id + '.npy')
+        if not os.path.exists(out_file):
+            params.append((ii, file, out_file))
+
     if parallel:
-        pool = Pool(40)
+        pool = Pool(processes=None)
         pool.map(CQT, params)
         pool.close()
         pool.join()
