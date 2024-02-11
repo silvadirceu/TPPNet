@@ -9,7 +9,8 @@ import bisect
 import torchvision
 import PIL
 
-def cut_data(data, out_length):
+def cut_data(data, out_length=None):
+    
     if out_length is not None:
         if data.shape[0] > out_length:
             max_offset = data.shape[0] - out_length
@@ -18,11 +19,15 @@ def cut_data(data, out_length):
         else:
             offset = out_length - data.shape[0]
             data = np.pad(data, ((0,offset),(0,0)), "constant")
+            
     if data.shape[0] < 200:
         offset = 200 - data.shape[0]
         data = np.pad(data, ((0,offset),(0,0)), "constant")
+        
     return data
+
 def cut_data_front(data, out_length):
+    
     if out_length is not None:
         if data.shape[0] > out_length:
             max_offset = data.shape[0] - out_length
@@ -31,10 +36,13 @@ def cut_data_front(data, out_length):
         else:
             offset = out_length - data.shape[0]
             data = np.pad(data, ((0,offset),(0,0)), "constant")
+            
     if data.shape[0] < 200:
         offset = 200 - data.shape[0]
         data = np.pad(data, ((0,offset),(0,0)), "constant")
+        
     return data
+
 def shorter(feature, mean_size=2):
     length, height  = feature.shape
     new_f = np.zeros((int(length/mean_size),height),dtype=np.float64)
@@ -43,9 +51,11 @@ def shorter(feature, mean_size=2):
     return new_f
 
 class CQT(Dataset):
+    
     def __init__(self, mode='train', out_length=None):
         self.indir = 'data/youtube_cqt_npy/'
         self.mode=mode
+        
         if mode == 'train': 
             filepath='data/SHS100K-TRAIN_6'
         elif mode == 'val':
@@ -67,9 +77,12 @@ class CQT(Dataset):
         elif mode == 'Mazurkas':
             self.indir = 'data/Mazurkas_cqt_npy/'
             filepath = 'data/Mazurkas_list.txt'
+            
         with open(filepath, 'r') as fp:
             self.file_list = [line.rstrip() for line in fp]
+            
         self.out_length = out_length
+        
     def __getitem__(self, index):
         transform_train = transforms.Compose([
             lambda x : x.T,
@@ -88,6 +101,7 @@ class CQT(Dataset):
             lambda x : torch.Tensor(x),
             lambda x : x.permute(1,0).unsqueeze(0),
         ])
+        
         filename = self.file_list[index].strip()
         set_id, version_id = filename.split('.')[0].split('_')
         set_id, version_id = int(set_id), int(version_id)

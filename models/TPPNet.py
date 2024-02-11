@@ -58,6 +58,7 @@ class CQT200Net(BasicModule):
         feature = self.fc0(x)
         x = self.fc1(feature)
         return x, feature
+    
 class CQT300Net(BasicModule):
     # No SPP Layer, input size is 1x84x300
     def __init__(self):
@@ -191,6 +192,9 @@ class CQTTPPNet(BasicModule):
         x = SPP(x, [4,3,2,1]) # [N, 256, 1, sum()=79]
         x = x.view(N,-1)
         feature = self.fc0(x)
+        
         if self.target is not None: 
             x = self.fc1(feature)
-        return x, feature
+            return x, feature
+            
+        return feature

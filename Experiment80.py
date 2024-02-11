@@ -77,12 +77,14 @@ pool.close()
 pool.join()
 '''
 import models
+
 opt.model = ''
 opt.load_model_path = 'best.pth'
 model = getattr(models, opt.model)()
 model.load(opt.load_model_path)
 model.to(torch.device('cuda'))
 model.eval()
+
 class CQTT(Dataset):
     def __init__(self, mode='songs80', out_length=None):
         self.mode=mode
