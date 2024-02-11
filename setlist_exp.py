@@ -4,22 +4,13 @@ from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 import models
 from config import opt
-from torchnet import meter
-from tqdm import tqdm
 import numpy as np
-import time
-import torch.nn.functional as F
 import torch
-import torch.nn as nn
 from utility import *
 import glob
 from torch.utils.data import Dataset
 import torch, torch.utils
-import random
-import bisect
-import torchvision
-import PIL
-import deepdish as dd 
+import pickle as pkl
 
 def cut_data(data, out_length=None):
     
@@ -88,7 +79,7 @@ class CQTLoader(Dataset):
         filename = self.file_list[index].strip()
         parts = filename.split('/')
         set_id = parts[-2]
-        version_id = parts.split('.')[0]
+        version_id = parts[-1].split('.')[0]
         
         data = np.load(filename) # from 12xN to Nx12
 
@@ -100,7 +91,11 @@ class CQTLoader(Dataset):
         return len(self.file_list)
 
 def device():
-    return "cuda:0" if torch.cuda.is_available() else "cpu"
+    return "cuda:1" if torch.cuda.is_available() else "cpu"
+
+def convertTuple(tup):
+    str = ''.join(tup)
+    return str 
 
 @torch.no_grad()
 def predict(model, dataloader, out_dir=None):
@@ -120,10 +115,15 @@ def predict(model, dataloader, out_dir=None):
         if out_dir is not None:
             features = norm(feature)
             
+            label = convertTuple(label)
+            version = convertTuple(version)
+
+            print(f"{label} -- {version}")
             path_dir = os.path.join(out_dir,label)
             os.makedirs(path_dir, exist_ok=True)
-            out_file = os.path.join(path_dir,version+".h5")
-            dd.save(out_file,(features, label, version))
+            out_file = os.path.join(path_dir,version+".pkl")
+            with open(out_file,"wb") as f:
+                pkl.dump((features, label, version), f)
         else:
             features = np.concatenate((features, feature), axis=0)
             labels.append(label)
@@ -136,12 +136,10 @@ def predict(model, dataloader, out_dir=None):
 
 if __name__=="__main__":
     
-    import models
+    from models.TPPNet import CQTTPPNet
 
-    opt.model = ''
-    opt.load_model_path = 'check_points/best.pth'
-    tpp_model = getattr(models, opt.model)()
-    tpp_model.load(opt.load_model_path)
+    tpp_model = CQTTPPNet()
+    tpp_model.load('models/check_points/best.pth')
 
     tpp_model.to(torch.device(device()))
 
