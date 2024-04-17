@@ -10,8 +10,10 @@ def SPP(x, pool_size):
     N, C, H, W = x.size()
     for i in range(len(pool_size)):
         maxpool = nn.AdaptiveMaxPool2d((H, pool_size[i]))
-        if i==0: spp = maxpool(x).view(N, -1)
-        else: spp = torch.cat((spp, maxpool(x).view(N, -1)),1)
+        if i==0: 
+            spp = maxpool(x).view(N, -1)
+        else: 
+            spp = torch.cat((spp, maxpool(x).view(N, -1)),1)
     return spp
 
 
